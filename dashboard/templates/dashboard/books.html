@@ -1,0 +1,147 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Books · Library Admin{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Books</h1>
+        <p class="text-sm text-slate-600">Search, filter, and manage the catalog quickly.</p>
+    </div>
+    <a href="{% url 'dashboard_book_create' %}" class="inline-flex items-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90">Add Book</a>
+</div>
+
+<form method="get" class="mt-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="md:col-span-2">
+            <label class="text-xs text-slate-600">Search</label>
+            <input name="q" value="{{ search }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Title, author, ISBN">
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Availability</label>
+            <select name="availability" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                <option value="">All</option>
+                <option value="available" {% if availability == "available" %}selected{% endif %}>Available</option>
+                <option value="unavailable" {% if availability == "unavailable" %}selected{% endif %}>Unavailable</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Author</label>
+            <input name="author" value="{{ author }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Author name">
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Sort</label>
+            <select name="order" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                <option value="-created_at" {% if order == "-created_at" %}selected{% endif %}>Recently added</option>
+                <option value="title" {% if order == "title" %}selected{% endif %}>Title A-Z</option>
+                <option value="author" {% if order == "author" %}selected{% endif %}>Author A-Z</option>
+                <option value="-page_count" {% if order == "-page_count" %}selected{% endif %}>Pages high → low</option>
+                <option value="page_count" {% if order == "page_count" %}selected{% endif %}>Pages low → high</option>
+            </select>
+        </div>
+    </div>
+    <div class="mt-3 flex justify-end">
+        <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90">Apply</button>
+    </div>
+</form>
+
+<div class="mt-4 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+            <tr>
+                <th class="text-left px-4 py-2">Title</th>
+                <th class="text-left px-4 py-2">Author</th>
+                <th class="text-left px-4 py-2">ISBN</th>
+                <th class="text-left px-4 py-2">Pages</th>
+                <th class="text-left px-4 py-2">Availability</th>
+                <th class="text-left px-4 py-2 text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+                <tr class="border-t border-slate-100">
+                    <td class="px-4 py-2 font-semibold">
+                        <a href="{% url 'dashboard_book_detail' book.pk %}" class="text-primary hover:underline">{{ book.title }}</a>
+                    </td>
+                    <td class="px-4 py-2 text-slate-700">{{ book.author }}</td>
+                    <td class="px-4 py-2 text-slate-500">{{ book.isbn }}</td>
+                    <td class="px-4 py-2 text-slate-500">{{ book.page_count }}</td>
+                    <td class="px-4 py-2">
+                        {% if book.is_active and book.available_copies > 0 %}
+                            <span class="rounded-full bg-green-100 text-green-700 px-2 py-1 text-xs">Available</span>
+                        {% elif book.is_active %}
+                            <span class="rounded-full bg-amber-100 text-amber-700 px-2 py-1 text-xs">Unavailable</span>
+                        {% else %}
+                            <span class="rounded-full bg-slate-200 text-slate-700 px-2 py-1 text-xs">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2 text-right space-x-2">
+                        <a class="text-primary text-xs font-semibold hover:underline" href="{% url 'dashboard_book_detail' book.pk %}">Edit</a>
+                        <button
+                            class="text-rose-600 text-xs font-semibold hover:underline"
+                            type="button"
+                            data-delete-url="{% url 'dashboard_book_delete' book.pk %}"
+                            data-book-title="{{ book.title }}"
+                            onclick="openBookDeleteModal(this)"
+                        >
+                            Delete
+                        </button>
+                        <a class="text-slate-700 text-xs font-semibold hover:underline" href="{% url 'dashboard_book_detail' book.pk %}">View</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="px-4 py-3 text-slate-500">No books found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="mt-3 flex items-center justify-between text-sm text-slate-600">
+    <div>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+    <div class="flex gap-2">
+        {% if page_obj.has_previous %}
+            <a class="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a class="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Book delete modal -->
+<div id="bookDeleteModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md border border-slate-200">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-900">Delete book</h3>
+            <button class="text-slate-500 hover:text-slate-700" onclick="closeBookDeleteModal()">&times;</button>
+        </div>
+        <div class="p-4 space-y-3">
+            <p class="text-sm text-slate-700">Are you sure you want to delete <span id="bookDeleteTitle" class="font-semibold"></span>? This action cannot be undone.</p>
+        </div>
+        <div class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+            <button class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" onclick="closeBookDeleteModal()">Cancel</button>
+            <form id="bookDeleteForm" method="post">
+                {% csrf_token %}
+                <button class="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700" type="submit">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openBookDeleteModal(button) {
+    const modal = document.getElementById('bookDeleteModal');
+    const form = document.getElementById('bookDeleteForm');
+    const titleEl = document.getElementById('bookDeleteTitle');
+    form.action = button.dataset.deleteUrl;
+    titleEl.textContent = button.dataset.bookTitle;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeBookDeleteModal() {
+    const modal = document.getElementById('bookDeleteModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+</script>
+{% endblock %}

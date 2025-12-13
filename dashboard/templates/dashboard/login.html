@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#2563eb' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-lg p-8">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="h-10 w-10 rounded-lg bg-primary/10 text-primary grid place-items-center font-bold">LA</div>
+            <div>
+                <div class="text-lg font-semibold">Library Admin</div>
+                <div class="text-sm text-slate-600">Dashboard access</div>
+            </div>
+        </div>
+        {% if form.non_field_errors %}
+            <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2 text-sm">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="text-xs text-slate-600">Username</label>
+                <input type="text" name="username" autocomplete="username" required class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+            <div>
+                <label class="text-xs text-slate-600">Password</label>
+                <input type="password" name="password" autocomplete="current-password" required class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+            <button class="w-full rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90" type="submit">Sign in</button>
+        </form>
+    </div>
+</body>
+</html>

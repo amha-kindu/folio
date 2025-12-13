@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["Amha Kindu <amhaznif@gmail.com>"]
 readme = "README.md"
-packages = [{include = "library_mgmt_system"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"

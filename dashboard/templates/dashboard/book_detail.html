@@ -1,0 +1,105 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{% if book %}Edit {{ book.title }}{% else %}Add Book{% endif %} · Library Admin{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-900">
+            {% if book %}Edit Book{% else %}Add Book{% endif %}
+        </h1>
+        <p class="text-sm text-slate-600">Manage book details and availability.</p>
+    </div>
+    <a href="{% url 'dashboard_books' %}" class="text-sm font-semibold text-primary hover:underline">Back to books</a>
+</div>
+
+<div class="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-slate-600">Title</label>
+                    <input type="text" name="title" value="{{ form.title.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" required>
+                    {% if form.title.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.title.errors|join:', ' }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">Author</label>
+                    <input type="text" name="author" value="{{ form.author.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" required>
+                    {% if form.author.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.author.errors|join:', ' }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">ISBN</label>
+                    <input type="text" name="isbn" value="{{ form.isbn.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" required>
+                    {% if form.isbn.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.isbn.errors|join:', ' }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">Page count</label>
+                    <input type="number" name="page_count" min="1" value="{{ form.page_count.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" required>
+                    {% if form.page_count.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.page_count.errors|join:', ' }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">Published date</label>
+                    <input type="date" name="published_date" value="{{ form.published_date.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                    {% if form.published_date.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.published_date.errors|join:', ' }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">Total copies</label>
+                    <input type="number" name="total_copies" min="0" value="{{ form.total_copies.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" required>
+                    {% if form.total_copies.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.total_copies.errors|join:', ' }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">Available copies</label>
+                    <input type="number" name="available_copies" min="0" value="{{ form.available_copies.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" required>
+                    {% if form.available_copies.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.available_copies.errors|join:', ' }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">Active</label>
+                    <select name="is_active" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                        <option value="True" {% if form.is_active.value %}selected{% endif %}>Active</option>
+                        <option value="False" {% if form.is_active.value is not None and not form.is_active.value %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="text-xs text-slate-600">Description</label>
+                <textarea name="description" rows="3" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">{{ form.description.value|default_if_none:'' }}</textarea>
+                {% if form.description.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.description.errors|join:', ' }}</p>{% endif %}
+            </div>
+            <div class="flex justify-end gap-2">
+                {% if book %}
+                    <form action="{% url 'dashboard_book_delete' book.pk %}" method="post" onsubmit="return confirm('Delete this book?')">
+                        {% csrf_token %}
+                        <button class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Delete</button>
+                    </form>
+                {% endif %}
+                <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90">
+                    {% if book %}Save{% else %}Create{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="space-y-4">
+        {% if book %}
+            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <h2 class="text-lg font-semibold mb-2">Availability</h2>
+                <p class="text-sm text-slate-600">Total: {{ book.total_copies }} | Available: {{ book.available_copies }}</p>
+                {% if active_loan %}
+                    <div class="mt-3 text-sm">
+                        <div class="font-semibold">Currently borrowed by {{ active_loan.borrower.username }}</div>
+                        <div class="text-slate-600">Since {{ active_loan.borrowed_at|date:"M d, Y" }}</div>
+                    </div>
+                {% else %}
+                    <div class="mt-3 text-sm text-green-700">No active loan.</div>
+                {% endif %}
+            </div>
+        {% endif %}
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+            <h2 class="text-lg font-semibold mb-2">Quick links</h2>
+            <ul class="text-sm text-primary space-y-1">
+                <li><a class="hover:underline" href="{% url 'dashboard_books' %}">Back to list</a></li>
+                <li><a class="hover:underline" href="/swagger/#/book/">API docs</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

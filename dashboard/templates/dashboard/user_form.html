@@ -1,0 +1,58 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Create User · Library Admin{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Create User</h1>
+        <p class="text-sm text-slate-600">Add a new user with role and status.</p>
+    </div>
+    <a href="{% url 'dashboard_users' %}" class="text-sm font-semibold text-primary hover:underline">Back to users</a>
+</div>
+
+<div class="mt-4 bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+    <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% csrf_token %}
+        <div>
+            <label class="text-xs text-slate-600">Username</label>
+            <input name="username" value="{{ form.username.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" required>
+            {% if form.username.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.username.errors|join:', ' }}</p>{% endif %}
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Email</label>
+            <input type="email" name="email" value="{{ form.email.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+            {% if form.email.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.email.errors|join:', ' }}</p>{% endif %}
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">First name</label>
+            <input name="first_name" value="{{ form.first_name.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Last name</label>
+            <input name="last_name" value="{{ form.last_name.value|default_if_none:'' }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Password</label>
+            <input type="password" name="password" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" required>
+            {% if form.password.errors %}<p class="text-xs text-rose-600 mt-1">{{ form.password.errors|join:', ' }}</p>{% endif %}
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Role</label>
+            <select name="role" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                <option value="member" {% if form.role.value == "member" %}selected{% endif %}>Member</option>
+                <option value="staff" {% if form.role.value == "staff" %}selected{% endif %}>Staff</option>
+                <option value="admin" {% if form.role.value == "admin" %}selected{% endif %}>Admin</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Active</label>
+            <select name="is_active" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                <option value="True" {% if form.is_active.value %}selected{% endif %}>Active</option>
+                <option value="False" {% if form.is_active.value is not None and not form.is_active.value %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        <div class="md:col-span-2 flex justify-end">
+            <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90">Create User</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

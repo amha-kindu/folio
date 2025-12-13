@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Library Admin{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        success: '#22c55e',
+                        warn: '#f97316',
+                        danger: '#ef4444',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-900">
+    <div class="min-h-screen">
+        <!-- Top bar -->
+        <header class="bg-white border-b border-slate-200 shadow-sm">
+            <div class="max-w-7xl mx-auto flex items-center gap-4 px-6 py-3">
+                <div class="flex items-center gap-2">
+                    <div class="h-9 w-9 rounded-lg bg-primary/10 text-primary grid place-items-center font-bold">LA</div>
+                    <div class="font-semibold text-lg">Library Admin</div>
+                </div>
+                <form method="get" class="flex-1">
+                    <div class="relative">
+                        <input name="q" value="{{ query }}" type="search" placeholder="Search books by title/ISBN or users by username/email" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                        <span class="absolute right-3 top-2.5 text-slate-400 text-xs">⌘K</span>
+                    </div>
+                </form>
+                <div class="flex items-center gap-3">
+                    <div class="text-sm text-slate-600">{{ request.user.username }}</div>
+                    <a href="{% url 'dashboard_logout' %}" class="text-sm font-semibold text-primary hover:text-primary/80">Logout</a>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 py-6 flex gap-6">
+            <!-- Sidebar -->
+            <aside class="w-56 shrink-0">
+                <nav class="space-y-1">
+                    {% url 'dashboard_overview' as overview_url %}
+                    {% url 'dashboard_books' as books_url %}
+                    {% url 'dashboard_loans' as loans_url %}
+                    {% url 'dashboard_users' as users_url %}
+                    {% url 'dashboard_settings' as settings_url %}
+                    <a href="{{ overview_url }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium {% if nav == 'overview' %}bg-primary text-white{% else %}text-slate-700 hover:bg-slate-200{% endif %}">Overview</a>
+                    <a href="{{ books_url }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium {% if nav == 'books' %}bg-primary text-white{% else %}text-slate-700 hover:bg-slate-200{% endif %}">Books</a>
+                    <a href="{{ loans_url }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium {% if nav == 'loans' %}bg-primary text-white{% else %}text-slate-700 hover:bg-slate-200{% endif %}">Loans</a>
+                    <a href="{{ users_url }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium {% if nav == 'users' %}bg-primary text-white{% else %}text-slate-700 hover:bg-slate-200{% endif %}">Users</a>
+                    <a href="{{ settings_url }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium {% if nav == 'settings' %}bg-primary text-white{% else %}text-slate-700 hover:bg-slate-200{% endif %}">Settings</a>
+                </nav>
+            </aside>
+
+            <!-- Main content -->
+            <main class="flex-1">
+                {% block content %}
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                    <p class="text-slate-600">Dashboard shell is ready. Content coming next.</p>
+                </div>
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+</body>
+</html>

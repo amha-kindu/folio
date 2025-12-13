@@ -1,0 +1,137 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Overview · Library Admin{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Overview</h1>
+        <p class="text-sm text-slate-600">Health snapshot and quick actions.</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="/swagger/#/book/" class="inline-flex items-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90">Add Book</a>
+        <a href="/swagger/#/admin-users/" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">Create User</a>
+        <a href="/api/loans/" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50">Export Loans</a>
+    </div>
+</div>
+
+<div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <a href="{% url 'dashboard_books' %}" class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+        <p class="text-xs text-slate-500 uppercase tracking-wide">Total Books</p>
+        <p class="text-2xl font-semibold mt-1">{{ stats.total_books }}</p>
+    </a>
+    <a href="{% url 'dashboard_books' %}?availability=available" class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+        <p class="text-xs text-slate-500 uppercase tracking-wide">Available Books</p>
+        <p class="text-2xl font-semibold mt-1 text-green-700">{{ stats.available_books }}</p>
+    </a>
+    <a href="{% url 'dashboard_loans' %}?status=active" class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+        <p class="text-xs text-slate-500 uppercase tracking-wide">Active Loans</p>
+        <p class="text-2xl font-semibold mt-1 text-blue-700">{{ stats.active_loans }}</p>
+    </a>
+    <a href="{% url 'dashboard_loans' %}?status=overdue" class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+        <p class="text-xs text-slate-500 uppercase tracking-wide">Overdue Loans</p>
+        <p class="text-2xl font-semibold mt-1 text-rose-600">{{ stats.overdue_loans }}</p>
+    </a>
+</div>
+
+<div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 space-y-3">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Recent Loans</h2>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-600">
+                    <tr>
+                        <th class="text-left px-4 py-2">Book</th>
+                        <th class="text-left px-4 py-2">User</th>
+                        <th class="text-left px-4 py-2">Borrowed</th>
+                        <th class="text-left px-4 py-2">Status</th>
+                        <th class="text-left px-4 py-2 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in recent_loans %}
+                        <tr class="border-t border-slate-100">
+                            <td class="px-4 py-2 font-semibold">{{ loan.book.title }}</td>
+                            <td class="px-4 py-2 text-slate-700">{{ loan.borrower.username }}</td>
+                            <td class="px-4 py-2 text-slate-500">{{ loan.borrowed_at|date:"M d, Y" }}</td>
+                            <td class="px-4 py-2">
+                                {% if loan.returned_at %}
+                                    <span class="rounded-full bg-slate-100 text-slate-700 px-2 py-1 text-xs">Returned</span>
+                                {% elif loan.due_at and loan.due_at < now %}
+                                    <span class="rounded-full bg-rose-100 text-rose-700 px-2 py-1 text-xs">Overdue</span>
+                                {% else %}
+                                    <span class="rounded-full bg-blue-100 text-blue-700 px-2 py-1 text-xs">Active</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                {% if not loan.returned_at %}
+                                    <form method="post" action="{% url 'dashboard_mark_returned' loan.pk %}">
+                                        {% csrf_token %}
+                                        <button class="text-xs font-semibold text-primary hover:underline">Mark returned</button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-xs text-slate-500">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="px-4 py-3 text-slate-500">No recent loans.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="space-y-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-lg font-semibold">Inventory Alerts</h2>
+            </div>
+            <div class="space-y-2">
+                {% for book in low_stock_books %}
+                    <div class="flex items-center justify-between text-sm">
+                        <div>
+                            <div class="font-semibold">{{ book.title }}</div>
+                            <div class="text-slate-500">{{ book.author }}</div>
+                        </div>
+                        <span class="rounded-full bg-rose-100 text-rose-700 px-2 py-1 text-xs">Out</span>
+                    </div>
+                {% empty %}
+                    <div class="text-sm text-slate-500">No low-stock alerts.</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+            <h2 class="text-lg font-semibold mb-2">Recently Added</h2>
+            <div class="space-y-2">
+                {% for book in recent_books %}
+                    <div class="flex items-center justify-between text-sm">
+                        <div>
+                            <div class="font-semibold">{{ book.title }}</div>
+                            <div class="text-slate-500">{{ book.author }}</div>
+                        </div>
+                        <div class="text-xs text-slate-500">{{ book.created_at|date:"M d" }}</div>
+                    </div>
+                {% empty %}
+                    <div class="text-sm text-slate-500">No recent additions.</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+            <h2 class="text-lg font-semibold mb-2">Pending Staff Approvals</h2>
+            <div class="space-y-2">
+                {% for staffer in pending_staff %}
+                    <div class="flex items-center justify-between text-sm">
+                        <div>
+                            <div class="font-semibold">{{ staffer.username }}</div>
+                            <div class="text-slate-500">{{ staffer.email }}</div>
+                        </div>
+                        <span class="rounded-full bg-amber-100 text-amber-700 px-2 py-1 text-xs">Pending</span>
+                    </div>
+                {% empty %}
+                    <div class="text-sm text-slate-500">No pending staff approvals.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

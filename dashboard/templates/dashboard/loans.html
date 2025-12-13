@@ -1,0 +1,154 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Loans · Library Admin{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Loans</h1>
+        <p class="text-sm text-slate-600">Filter by status, date, user, or book; close loans quickly.</p>
+    </div>
+    <a href="/swagger/#/loan/" class="inline-flex items-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90">Export CSV</a>
+</div>
+
+<form method="get" class="mt-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div>
+            <label class="text-xs text-slate-600">Status</label>
+            <select name="status" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+                <option value="">All</option>
+                <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+                <option value="returned" {% if status_filter == "returned" %}selected{% endif %}>Returned</option>
+                <option value="overdue" {% if status_filter == "overdue" %}selected{% endif %}>Overdue</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">User</label>
+            <input name="user" value="{{ user_q }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Username / email">
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Book</label>
+            <input name="book" value="{{ book_q }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Title / ISBN">
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Borrowed start</label>
+            <input type="date" name="start" value="{{ start }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+        </div>
+        <div>
+            <label class="text-xs text-slate-600">Borrowed end</label>
+            <input type="date" name="end" value="{{ end }}" class="w-full mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+        </div>
+    </div>
+    <div class="mt-3 flex justify-end">
+        <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90">Apply</button>
+    </div>
+</form>
+
+<div class="mt-4 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+            <tr>
+                <th class="text-left px-4 py-2">Book</th>
+                <th class="text-left px-4 py-2">User</th>
+                <th class="text-left px-4 py-2">Borrowed at</th>
+                <th class="text-left px-4 py-2">Due</th>
+                <th class="text-left px-4 py-2">Returned at</th>
+                <th class="text-left px-4 py-2">Status</th>
+                <th class="text-left px-4 py-2 text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for loan in loans %}
+                <tr class="border-t border-slate-100 {% if not loan.returned_at and loan.due_at and loan.due_at < now %}bg-rose-50{% endif %}">
+                    <td class="px-4 py-2 font-semibold">{{ loan.book.title }}</td>
+                    <td class="px-4 py-2 text-slate-700">{{ loan.borrower.username }}</td>
+                    <td class="px-4 py-2 text-slate-500">{{ loan.borrowed_at|date:"M d, Y" }}</td>
+                    <td class="px-4 py-2 text-slate-500">{% if loan.due_at %}{{ loan.due_at|date:"M d, Y" }}{% else %}—{% endif %}</td>
+                    <td class="px-4 py-2 text-slate-500">{% if loan.returned_at %}{{ loan.returned_at|date:"M d, Y" }}{% else %}—{% endif %}</td>
+                    <td class="px-4 py-2">
+                        {% if loan.returned_at %}
+                            <span class="rounded-full bg-slate-100 text-slate-700 px-2 py-1 text-xs">Returned</span>
+                        {% elif loan.due_at and loan.due_at < now %}
+                            <span class="rounded-full bg-rose-100 text-rose-700 px-2 py-1 text-xs">Overdue</span>
+                        {% else %}
+                            <span class="rounded-full bg-blue-100 text-blue-700 px-2 py-1 text-xs">Active</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2 text-right">
+                        {% if not loan.returned_at %}
+                            <button
+                                class="text-xs font-semibold text-primary hover:underline"
+                                type="button"
+                                data-return-url="{% url 'dashboard_mark_returned' loan.pk %}"
+                                data-book-title="{{ loan.book.title }}"
+                                data-username="{{ loan.borrower.username }}"
+                                onclick="openReturnModal(this)"
+                            >
+                                Mark returned
+                            </button>
+                        {% else %}
+                            <span class="text-xs text-slate-500">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="px-4 py-3 text-slate-500">No loans found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="mt-3 flex items-center justify-between text-sm text-slate-600">
+    <div>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+    <div class="flex gap-2">
+        {% if page_obj.has_previous %}
+            <a class="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a class="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Return modal -->
+<div id="returnModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md border border-slate-200">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-900">Mark as returned</h3>
+            <button class="text-slate-500 hover:text-slate-700" onclick="closeReturnModal()">&times;</button>
+        </div>
+        <div class="p-4 space-y-3">
+            <p class="text-sm text-slate-700">
+                Confirm return of <span id="returnBookTitle" class="font-semibold"></span> borrowed by
+                <span id="returnUsername" class="font-semibold"></span>.
+            </p>
+        </div>
+        <div class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+            <button class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" onclick="closeReturnModal()">Cancel</button>
+            <form id="returnForm" method="post">
+                {% csrf_token %}
+                <button class="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary/90" type="submit">Mark returned</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openReturnModal(button) {
+    const modal = document.getElementById('returnModal');
+    const form = document.getElementById('returnForm');
+    const bookEl = document.getElementById('returnBookTitle');
+    const userEl = document.getElementById('returnUsername');
+    form.action = button.dataset.returnUrl;
+    bookEl.textContent = button.dataset.bookTitle;
+    userEl.textContent = button.dataset.username;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeReturnModal() {
+    const modal = document.getElementById('returnModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+</script>
+{% endblock %}
