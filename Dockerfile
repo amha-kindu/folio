@@ -35,4 +35,4 @@ EXPOSE 8000
 
 # Entrypoint sets up migrations/superuser then starts the server
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+

@@ -4,6 +4,7 @@
 - Backend service for managing a library’s catalog and lending operations.
 - Serves anonymous visitors (browse/search), registered members (JWT auth), and administrators (full management + dashboard).
 - Core capabilities: browse/search books, borrow/return, administer books/users/loans, and view metrics via the admin dashboard.
+ - REST APIs with JWT auth; session-based admin dashboard for operational control (admin-only).
 
 ---
 
@@ -73,10 +74,19 @@
 ---
 
 ## 🧪 Testing
-- Unit tests for models, serializers, views in `accounts/tests.py`, `catalog/tests.py`, `dashboard/tests.py`.
-- Integration tests (auth + borrow/return) in `tests/test_integration_api.py`.
-- Tools: Pytest + Django, Coverage (`pytest --cov=. --cov-report=term-missing`).
-- Ensure `DJANGO_SETTINGS_MODULE=config.settings` is set in the environment when running tests (PowerShell: `set DJANGO_SETTINGS_MODULE=config.settings`; Bash: `export DJANGO_SETTINGS_MODULE=config.settings`).
+
+```bash
+# full suite with coverage
+poetry run pytest
+
+# coverage report with missing lines and HTML/XML outputs
+poetry run pytest --cov --cov-report=term-missing --cov-report=html --cov-report=xml
+
+# open HTML coverage report
+start htmlcov/index.html      # Windows
+open htmlcov/index.html       # macOS
+xdg-open htmlcov/index.html   # Linux
+```
 
 ---
 
@@ -107,7 +117,7 @@
 
 ### Prerequisites
 - Python 3.12+
-- Poetry (or pip)
+- Poetry
 - Docker (optional)
 - PostgreSQL (optional for local/prod)
 
@@ -143,6 +153,7 @@ docker run -p 8000:8000 --env-file .env \
   library-api
 ```
 - Entrypoint runs migrations and creates the superuser before starting Gunicorn.
+- Static files are collected at build; ensure reverse proxy serves `/static/` (Whitenoise storage configured).
 
 ---
 
@@ -152,6 +163,7 @@ docker run -p 8000:8000 --env-file .env \
 - Use managed PostgreSQL (e.g., Heroku Postgres).
 - Collect static files before release (`python manage.py collectstatic`).
 - Enforce HTTPS and secure cookies in production; set `CSRF_TRUSTED_ORIGINS` to your domain(s).
+ - Add `whitenoise.middleware.WhiteNoiseMiddleware` if serving static assets from the app in production.
 
 ---
 

@@ -312,6 +312,16 @@ class DashboardLoginView(LoginView):
 
 class DashboardLogoutView(LogoutView):
     next_page = reverse_lazy("dashboard_login")
+    http_method_names = ["get", "post", "head", "options", "trace"]
+
+    def post(self, request, *args, **kwargs):
+        # Perform logout then redirect (PRG).
+        super().post(request, *args, **kwargs)
+        return HttpResponseRedirect(self.next_page)
+
+    def get(self, request, *args, **kwargs):
+        # Allow GET to trigger logout for convenience (avoids 405).
+        return self.post(request, *args, **kwargs)
 
 
 class UserForm(forms.ModelForm):
