@@ -1,4 +1,4 @@
-# Library Management System
+# Folio: Library Management System
 
 ## 📌 Overview
 - Backend service for managing a library’s catalog and lending operations.
